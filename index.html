@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>D&D by Tongue Tempt</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #1A1A2E;
+      --card: #22223B;
+      --card-hover: #2A2A45;
+      --gold: #F4A832;
+      --gold-dark: #D4891A;
+      --cream: #FFF8F0;
+      --muted: #A89F9A;
+      --success: #4CAF7D;
+      --danger: #E05C5C;
+      --border: rgba(244,168,50,0.15);
+      --radius: 14px;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--cream);
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── HEADER ── */
+    header {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(26,26,46,0.95);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      display: flex; align-items: center; justify-content: space-between;
+      height: 64px;
+    }
+    .brand { display: flex; align-items: center; gap: 10px; }
+    .brand-icon {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: var(--gold);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+    }
+    .brand-name {
+      font-family: 'Playfair Display', serif;
+      font-size: 18px; font-weight: 700; color: var(--cream);
+      letter-spacing: 0.01em;
+    }
+    .brand-tagline { font-size: 10px; color: var(--muted); margin-top: 1px; }
+
+    /* Cart button */
+    .cart-btn {
+      position: relative;
+      background: var(--gold); color: #1A1A2E;
+      border: none; border-radius: 50px;
+      padding: 10px 20px; cursor: pointer;
+      font-family: 'Inter', sans-serif; font-weight: 600; font-size: 14px;
+      display: flex; align-items: center; gap: 8px;
+      transition: background 0.2s, transform 0.15s;
+    }
+    .cart-btn:hover { background: var(--gold-dark); }
+    .cart-btn.pulse { animation: cartPulse 0.4s ease; }
+    @keyframes cartPulse {
+      0%   { transform: scale(1); }
+      40%  { transform: scale(1.12); }
+      100% { transform: scale(1); }
+    }
+    .cart-count {
+      background: #1A1A2E; color: var(--gold);
+      border-radius: 50%; width: 20px; height: 20px;
+      font-size: 11px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    /* ── HERO ── */
+    .hero {
+      padding: 60px 24px 48px;
+      text-align: center;
+      background: radial-gradient(ellipse at 50% 0%, rgba(244,168,50,0.12) 0%, transparent 70%);
+    }
+    .hero-eyebrow {
+      display: inline-block;
+      font-size: 11px; font-weight: 600; letter-spacing: 0.15em;
+      color: var(--gold); text-transform: uppercase;
+      margin-bottom: 14px;
+    }
+    .hero h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(32px, 6vw, 56px);
+      font-weight: 700; line-height: 1.1;
+      color: var(--cream);
+      margin-bottom: 14px;
+    }
+    .hero h1 em { color: var(--gold); font-style: italic; }
+    .hero p {
+      font-size: 15px; color: var(--muted); max-width: 440px; margin: 0 auto 32px;
+      line-height: 1.6;
+    }
+
+    /* Order type selector */
+    .order-type-row {
+      display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;
+    }
+    .order-type-btn {
+      padding: 12px 28px; border-radius: 50px;
+      border: 1.5px solid var(--border);
+      background: transparent; color: var(--muted);
+      font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 500;
+      cursor: pointer; transition: all 0.2s;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .order-type-btn:hover { border-color: var(--gold); color: var(--cream); }
+    .order-type-btn.active {
+      background: var(--gold); color: #1A1A2E;
+      border-color: var(--gold); font-weight: 600;
+    }
+
+    /* Table/name input */
+    .order-info-bar {
+      max-width: 360px; margin: 20px auto 0;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 16px 20px;
+      display: none;
+    }
+    .order-info-bar.visible { display: block; }
+    .order-info-bar label {
+      display: block; font-size: 11px; font-weight: 600;
+      color: var(--gold); text-transform: uppercase; letter-spacing: 0.1em;
+      margin-bottom: 8px;
+    }
+    .order-info-bar input {
+      width: 100%; background: var(--bg);
+      border: 1px solid var(--border); border-radius: 8px;
+      padding: 10px 14px; color: var(--cream);
+      font-family: 'Inter', sans-serif; font-size: 14px;
+      outline: none; transition: border-color 0.2s;
+    }
+    .order-info-bar input:focus { border-color: var(--gold); }
+    .order-info-bar input::placeholder { color: var(--muted); }
+
+    /* ── CATEGORY TABS ── */
+    .category-section {
+      position: sticky; top: 64px; z-index: 90;
+      background: rgba(26,26,46,0.95);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+    }
+    .category-tabs {
+      display: flex; gap: 4px;
+      overflow-x: auto; scrollbar-width: none;
+      padding: 12px 0;
+    }
+    .category-tabs::-webkit-scrollbar { display: none; }
+    .cat-tab {
+      flex-shrink: 0;
+      padding: 8px 20px; border-radius: 50px;
+      border: none; background: transparent;
+      color: var(--muted); cursor: pointer;
+      font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 500;
+      transition: all 0.2s;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .cat-tab:hover { color: var(--cream); }
+    .cat-tab.active {
+      background: rgba(244,168,50,0.15);
+      color: var(--gold); font-weight: 600;
+    }
+
+    /* ── MENU GRID ── */
+    .menu-section { padding: 32px 24px 120px; max-width: 1100px; margin: 0 auto; }
+    .category-group { margin-bottom: 48px; }
+    .category-group.hidden { display: none; }
+    .category-label {
+      font-family: 'Playfair Display', serif;
+      font-size: 22px; font-weight: 600;
+      color: var(--cream); margin-bottom: 20px;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .category-label::after {
+      content: ''; flex: 1; height: 1px;
+      background: var(--border);
+    }
+    .menu-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+    }
+
+    /* Menu card */
+    .menu-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+      cursor: pointer;
+    }
+    .menu-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 32px rgba(0,0,0,0.35);
+      border-color: rgba(244,168,50,0.3);
+    }
+    .menu-card-img {
+      width: 100%; height: 160px; object-fit: cover;
+      background: var(--card-hover);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 48px;
+    }
+    .menu-card-body { padding: 14px 16px; }
+    .menu-card-name {
+      font-family: 'Playfair Display', serif;
+      font-size: 16px; font-weight: 600; color: var(--cream);
+      margin-bottom: 4px;
+    }
+    .menu-card-desc {
+      font-size: 12px; color: var(--muted); line-height: 1.5;
+      margin-bottom: 12px; min-height: 36px;
+    }
+    .menu-card-footer {
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .menu-card-price {
+      font-size: 17px; font-weight: 700; color: var(--gold);
+      font-variant-numeric: tabular-nums;
+    }
+    .add-btn {
+      width: 34px; height: 34px; border-radius: 50%;
+      background: var(--gold); border: none;
+      color: #1A1A2E; font-size: 20px; font-weight: 700;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: background 0.2s, transform 0.15s;
+      flex-shrink: 0;
+    }
+    .add-btn:hover { background: var(--gold-dark); transform: scale(1.1); }
+    .item-qty-control {
+      display: flex; align-items: center; gap: 8px;
+    }
+    .qty-btn {
+      width: 28px; height: 28px; border-radius: 50%;
+      border: 1.5px solid var(--gold); background: transparent;
+      color: var(--gold); font-size: 16px; font-weight: 700;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s;
+    }
+    .qty-btn:hover { background: var(--gold); color: #1A1A2E; }
+    .qty-num { font-size: 15px; font-weight: 600; color: var(--cream); min-width: 16px; text-align: center; }
+
+    .veg-badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: 10px; font-weight: 600; color: var(--success);
+      background: rgba(76,175,125,0.12); border: 1px solid rgba(76,175,125,0.3);
+      border-radius: 4px; padding: 2px 6px; margin-bottom: 6px;
+    }
+    .spicy-badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: 10px; font-weight: 600; color: #FF8C42;
+      background: rgba(255,140,66,0.12); border: 1px solid rgba(255,140,66,0.3);
+      border-radius: 4px; padding: 2px 6px; margin-bottom: 6px; margin-left: 4px;
+    }
+
+    /* ── CART DRAWER ── */
+    .cart-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(4px);
+      z-index: 200; opacity: 0; pointer-events: none;
+      transition: opacity 0.3s;
+    }
+    .cart-overlay.open { opacity: 1; pointer-events: all; }
+    .cart-drawer {
+      position: fixed; right: 0; top: 0; bottom: 0;
+      width: min(420px, 100vw);
+      background: var(--card);
+      border-left: 1px solid var(--border);
+      z-index: 201;
+      display: flex; flex-direction: column;
+      transform: translateX(100%);
+      transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
+    }
+    .cart-drawer.open { transform: translateX(0); }
+
+    .cart-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .cart-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 20px; font-weight: 700; color: var(--cream);
+    }
+    .cart-close {
+      width: 36px; height: 36px; border-radius: 50%;
+      border: 1px solid var(--border); background: transparent;
+      color: var(--muted); cursor: pointer; font-size: 18px;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s;
+    }
+    .cart-close:hover { border-color: var(--gold); color: var(--gold); }
+
+    .cart-order-badge {
+      margin: 16px 24px 0;
+      padding: 10px 14px;
+      background: rgba(244,168,50,0.1); border: 1px solid rgba(244,168,50,0.25);
+      border-radius: 10px; font-size: 13px; color: var(--gold); font-weight: 500;
+    }
+
+    .cart-items { flex: 1; overflow-y: auto; padding: 16px 24px; }
+    .cart-empty {
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; height: 200px; gap: 12px;
+      color: var(--muted); font-size: 14px; text-align: center;
+    }
+    .cart-empty-icon { font-size: 48px; opacity: 0.4; }
+
+    .cart-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 14px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .cart-item:last-child { border-bottom: none; }
+    .cart-item-emoji { font-size: 28px; width: 40px; text-align: center; flex-shrink: 0; }
+    .cart-item-info { flex: 1; min-width: 0; }
+    .cart-item-name { font-size: 14px; font-weight: 500; color: var(--cream); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .cart-item-price { font-size: 13px; color: var(--gold); font-weight: 600; margin-top: 2px; }
+    .cart-item-controls { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+    .cart-qty-btn {
+      width: 26px; height: 26px; border-radius: 50%;
+      border: 1.5px solid var(--border); background: transparent;
+      color: var(--muted); font-size: 14px; font-weight: 700;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s;
+    }
+    .cart-qty-btn:hover { border-color: var(--gold); color: var(--gold); }
+    .cart-qty-num { font-size: 14px; font-weight: 600; color: var(--cream); min-width: 18px; text-align: center; }
+
+    /* Notes input */
+    .cart-notes-section { padding: 0 24px 16px; }
+    .cart-notes-section label { display: block; font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; }
+    .cart-notes-section textarea {
+      width: 100%; background: var(--bg); border: 1px solid var(--border);
+      border-radius: 10px; padding: 10px 14px;
+      color: var(--cream); font-family: 'Inter', sans-serif; font-size: 13px;
+      resize: none; height: 72px; outline: none; transition: border-color 0.2s;
+    }
+    .cart-notes-section textarea:focus { border-color: var(--gold); }
+    .cart-notes-section textarea::placeholder { color: var(--muted); }
+
+    .cart-footer {
+      padding: 16px 24px 24px;
+      border-top: 1px solid var(--border);
+    }
+    .cart-total-row {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 16px;
+    }
+    .cart-total-label { font-size: 14px; color: var(--muted); }
+    .cart-total-amount { font-family: 'Playfair Display', serif; font-size: 24px; font-weight: 700; color: var(--gold); }
+
+    .place-order-btn {
+      width: 100%; padding: 16px;
+      background: var(--gold); color: #1A1A2E;
+      border: none; border-radius: var(--radius);
+      font-family: 'Inter', sans-serif; font-size: 16px; font-weight: 700;
+      cursor: pointer; transition: background 0.2s, transform 0.15s;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .place-order-btn:hover { background: var(--gold-dark); }
+    .place-order-btn:active { transform: scale(0.98); }
+    .place-order-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+    /* ── SUCCESS MODAL ── */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(6px);
+      z-index: 300; display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none; transition: opacity 0.3s;
+    }
+    .modal-overlay.open { opacity: 1; pointer-events: all; }
+    .modal {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 20px; padding: 40px 32px;
+      max-width: 380px; width: 90%; text-align: center;
+      transform: scale(0.9); transition: transform 0.3s;
+    }
+    .modal-overlay.open .modal { transform: scale(1); }
+    .modal-icon { font-size: 56px; margin-bottom: 16px; }
+    .modal-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 24px; font-weight: 700; color: var(--cream); margin-bottom: 8px;
+    }
+    .modal-msg { font-size: 14px; color: var(--muted); line-height: 1.6; margin-bottom: 24px; }
+    .modal-order-id {
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: 10px; padding: 12px 20px; margin-bottom: 24px;
+      font-size: 13px; color: var(--muted);
+    }
+    .modal-order-id strong { color: var(--gold); font-size: 16px; display: block; margin-top: 4px; }
+    .modal-btn {
+      background: var(--gold); color: #1A1A2E;
+      border: none; border-radius: 50px; padding: 12px 32px;
+      font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 700;
+      cursor: pointer; transition: background 0.2s;
+    }
+    .modal-btn:hover { background: var(--gold-dark); }
+
+    /* ── STATUS TRACKER ── */
+    .status-section {
+      max-width: 500px; margin: 0 auto 48px;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 24px; display: none;
+    }
+    .status-section.visible { display: block; }
+    .status-header { font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 600; color: var(--cream); margin-bottom: 4px; }
+    .status-sub { font-size: 12px; color: var(--muted); margin-bottom: 20px; }
+    .status-steps { display: flex; align-items: center; gap: 0; }
+    .status-step { display: flex; flex-direction: column; align-items: center; flex: 1; }
+    .status-dot {
+      width: 36px; height: 36px; border-radius: 50%;
+      border: 2px solid var(--border);
+      background: var(--bg); color: var(--muted);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; transition: all 0.4s;
+    }
+    .status-step.done .status-dot { background: var(--gold); border-color: var(--gold); color: #1A1A2E; }
+    .status-step.active .status-dot { border-color: var(--gold); color: var(--gold); box-shadow: 0 0 0 4px rgba(244,168,50,0.2); }
+    .status-step-label { font-size: 10px; color: var(--muted); margin-top: 6px; font-weight: 500; text-align: center; }
+    .status-step.done .status-step-label, .status-step.active .status-step-label { color: var(--gold); }
+    .status-line { flex: 1; height: 2px; background: var(--border); margin-top: -18px; transition: background 0.4s; }
+    .status-line.done { background: var(--gold); }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 600px) {
+      .hero { padding: 40px 16px 32px; }
+      .menu-section { padding: 24px 16px 100px; }
+      .menu-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
+      .menu-card-img { height: 120px; font-size: 36px; }
+      .menu-card-body { padding: 10px 12px; }
+      .menu-card-name { font-size: 14px; }
+      .menu-card-price { font-size: 15px; }
+    }
+    @media (max-width: 360px) {
+      .menu-grid { grid-template-columns: 1fr; }
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="brand">
+    <div class="brand-icon">🍽️</div>
+    <div>
+      <div class="brand-name">D&D by Tongue Tempt</div>
+      <div class="brand-tagline">Order fresh, eat happy</div>
+    </div>
+  </div>
+  <button class="cart-btn" id="cartBtn" onclick="openCart()">
+    🛒 Cart
+    <span class="cart-count" id="cartCount">0</span>
+  </button>
+</header>
+
+<!-- HERO -->
+<section class="hero">
+  <span class="hero-eyebrow">Welcome to D&D by Tongue Tempt</span>
+  <h1>Good food, <em>great memories</em></h1>
+  <p>Browse our menu, place your order, and we'll take care of the rest — fresh, fast, and made with love.</p>
+
+  <div class="order-type-row">
+    <button class="order-type-btn active" id="btn-dinein" onclick="setOrderType('dinein')">
+      🪑 Dine-In
+    </button>
+    <button class="order-type-btn" id="btn-takeaway" onclick="setOrderType('takeaway')">
+      🥡 Takeaway
+    </button>
+  </div>
+
+  <div class="order-info-bar visible" id="orderInfoBar">
+    <label id="orderInfoLabel">Table Number</label>
+    <input type="text" id="orderInfoInput" placeholder="Enter your table number" />
+  </div>
+</section>
+
+<!-- STATUS TRACKER (shows after order placed) -->
+<div class="menu-section" style="padding-top:0; padding-bottom:0;">
+  <div class="status-section" id="statusSection">
+    <div class="status-header">Your Order is Live! 🎉</div>
+    <div class="status-sub" id="statusSub">Tracking order #—</div>
+    <div class="status-steps">
+      <div class="status-step done" id="step1">
+        <div class="status-dot">✓</div>
+        <div class="status-step-label">Received</div>
+      </div>
+      <div class="status-line" id="line1"></div>
+      <div class="status-step active" id="step2">
+        <div class="status-dot">👨‍🍳</div>
+        <div class="status-step-label">Preparing</div>
+      </div>
+      <div class="status-line" id="line2"></div>
+      <div class="status-step" id="step3">
+        <div class="status-dot">✅</div>
+        <div class="status-step-label">Ready</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CATEGORY TABS -->
+<div class="category-section">
+  <div class="category-tabs" id="categoryTabs"></div>
+</div>
+
+<!-- MENU -->
+<div class="menu-section" id="menuSection"></div>
+
+<!-- CART OVERLAY + DRAWER -->
+<div class="cart-overlay" id="cartOverlay" onclick="closeCart()"></div>
+<div class="cart-drawer" id="cartDrawer">
+  <div class="cart-header">
+    <div class="cart-title">Your Order</div>
+    <button class="cart-close" onclick="closeCart()">✕</button>
+  </div>
+  <div class="cart-order-badge" id="cartBadge">🪑 Dine-In — Table —</div>
+  <div class="cart-items" id="cartItems">
+    <div class="cart-empty">
+      <div class="cart-empty-icon">🛒</div>
+      <div>Your cart is empty.<br>Add something delicious!</div>
+    </div>
+  </div>
+  <div class="cart-notes-section">
+    <label>Special Instructions</label>
+    <textarea id="cartNotes" placeholder="Allergies, preferences, or any special requests..."></textarea>
+  </div>
+  <div class="cart-footer">
+    <div class="cart-total-row">
+      <span class="cart-total-label">Total</span>
+      <span class="cart-total-amount" id="cartTotal">RM 0.00</span>
+    </div>
+    <button class="place-order-btn" id="placeOrderBtn" onclick="placeOrder()">
+      Place Order 🚀
+    </button>
+  </div>
+</div>
+
+<!-- SUCCESS MODAL -->
+<div class="modal-overlay" id="successModal">
+  <div class="modal">
+    <div class="modal-icon">🎉</div>
+    <div class="modal-title">Order Placed!</div>
+    <div class="modal-msg">Your order has been sent to the kitchen. Sit tight — deliciousness is on its way!</div>
+    <div class="modal-order-id">
+      Order Number
+      <strong id="modalOrderId">#0000</strong>
+    </div>
+    <button class="modal-btn" onclick="closeModal()">Track My Order</button>
+  </div>
+</div>
+
+<script>
+  // ── MENU DATA ──
+  const menuData = [
+    {
+      category: "Starters", emoji: "🥗",
+      items: [
+        { id:1, name:"Crispy Calamari", desc:"Golden fried squid rings with lemon aioli dip", price:14.90, emoji:"🦑", veg:false, spicy:false },
+        { id:2, name:"Bruschetta Trio", desc:"Toasted sourdough with tomato, pesto & mushroom", price:12.90, emoji:"🍞", veg:true, spicy:false },
+        { id:3, name:"Spicy Wings", desc:"6 pcs crispy chicken wings with fiery sambal sauce", price:16.90, emoji:"🍗", veg:false, spicy:true },
+        { id:4, name:"Garden Salad", desc:"Fresh greens, cherry tomatoes, cucumber, balsamic", price:11.90, emoji:"🥗", veg:true, spicy:false },
+      ]
+    },
+    {
+      category: "Mains", emoji: "🍽️",
+      items: [
+        { id:5, name:"Grilled Barramundi", desc:"Pan-seared barramundi, herb butter, seasonal veg", price:32.90, emoji:"🐟", veg:false, spicy:false },
+        { id:6, name:"Lamb Rack", desc:"Herb-crusted lamb rack, roasted potato, red wine jus", price:48.90, emoji:"🥩", veg:false, spicy:false },
+        { id:7, name:"Mushroom Risotto", desc:"Creamy arborio rice, wild mushrooms, parmesan", price:26.90, emoji:"🍄", veg:true, spicy:false },
+        { id:8, name:"Spicy Aglio Pasta", desc:"Linguine, garlic, chilli, cherry tomato, parmesan", price:22.90, emoji:"🍝", veg:true, spicy:true },
+        { id:9, name:"Chicken Chop", desc:"Grilled chicken with mushroom sauce & coleslaw", price:24.90, emoji:"🍗", veg:false, spicy:false },
+        { id:10, name:"Beef Burger", desc:"180g beef patty, cheddar, pickles, house sauce", price:28.90, emoji:"🍔", veg:false, spicy:false },
+      ]
+    },
+    {
+      category: "Drinks", emoji: "🥤",
+      items: [
+        { id:11, name:"Fresh Lime Juice", desc:"Squeezed to order, lightly sweetened", price:6.90, emoji:"🍋", veg:true, spicy:false },
+        { id:12, name:"Iced Milo", desc:"Classic chocolate malt drink with condensed milk", price:7.90, emoji:"🍫", veg:true, spicy:false },
+        { id:13, name:"Watermelon Lemonade", desc:"Freshly blended watermelon with a hint of mint", price:8.90, emoji:"🍉", veg:true, spicy:false },
+        { id:14, name:"Hot Coffee", desc:"House blend espresso, your choice of milk", price:9.90, emoji:"☕", veg:true, spicy:false },
+      ]
+    },
+    {
+      category: "Desserts", emoji: "🍰",
+      items: [
+        { id:15, name:"Chocolate Lava Cake", desc:"Warm dark chocolate cake, vanilla ice cream", price:16.90, emoji:"🍫", veg:true, spicy:false },
+        { id:16, name:"Crème Brûlée", desc:"Classic French vanilla custard, caramel crust", price:14.90, emoji:"🍮", veg:true, spicy:false },
+        { id:17, name:"Mango Sorbet", desc:"Three scoops of fresh mango, mint garnish", price:12.90, emoji:"🥭", veg:true, spicy:false },
+      ]
+    }
+  ];
+
+  // ── STATE ──
+  let cart = {};           // { itemId: quantity }
+  let orderType = 'dinein';
+  let orderCounter = Math.floor(1000 + Math.random() * 9000);
+
+  // ── RENDER MENU ──
+  function renderMenu() {
+    const tabs = document.getElementById('categoryTabs');
+    const section = document.getElementById('menuSection');
+    tabs.innerHTML = '';
+    section.innerHTML = '';
+
+    menuData.forEach((cat, i) => {
+      // Tab
+      const tab = document.createElement('button');
+      tab.className = 'cat-tab' + (i === 0 ? ' active' : '');
+      tab.textContent = cat.emoji + ' ' + cat.category;
+      tab.onclick = () => filterCategory(cat.category);
+      tab.dataset.cat = cat.category;
+      tabs.appendChild(tab);
+
+      // Group
+      const group = document.createElement('div');
+      group.className = 'category-group';
+      group.dataset.cat = cat.category;
+
+      const label = document.createElement('div');
+      label.className = 'category-label';
+      label.textContent = cat.category;
+      group.appendChild(label);
+
+      const grid = document.createElement('div');
+      grid.className = 'menu-grid';
+
+      cat.items.forEach(item => {
+        grid.appendChild(buildCard(item));
+      });
+
+      group.appendChild(grid);
+      section.appendChild(group);
+    });
+  }
+
+  function buildCard(item) {
+    const card = document.createElement('div');
+    card.className = 'menu-card';
+    card.id = 'card-' + item.id;
+
+    const qty = cart[item.id] || 0;
+    const badgesHtml = (item.veg ? '<span class="veg-badge">🟢 Veg</span>' : '') +
+                       (item.spicy ? '<span class="spicy-badge">🌶 Spicy</span>' : '');
+
+    card.innerHTML = `
+      <div class="menu-card-img">${item.emoji}</div>
+      <div class="menu-card-body">
+        <div>${badgesHtml}</div>
+        <div class="menu-card-name">${item.name}</div>
+        <div class="menu-card-desc">${item.desc}</div>
+        <div class="menu-card-footer">
+          <div class="menu-card-price">RM ${item.price.toFixed(2)}</div>
+          <div id="ctrl-${item.id}">
+            ${qty === 0
+              ? `<button class="add-btn" onclick="changeQty(${item.id}, 1)">+</button>`
+              : `<div class="item-qty-control">
+                   <button class="qty-btn" onclick="changeQty(${item.id}, -1)">−</button>
+                   <span class="qty-num">${qty}</span>
+                   <button class="qty-btn" onclick="changeQty(${item.id}, 1)">+</button>
+                 </div>`
+            }
+          </div>
+        </div>
+      </div>
+    `;
+    return card;
+  }
+
+  function filterCategory(catName) {
+    document.querySelectorAll('.cat-tab').forEach(t => t.classList.toggle('active', t.dataset.cat === catName));
+    const target = document.querySelector(`.category-group[data-cat="${catName}"]`);
+    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  // ── CART LOGIC ──
+  function changeQty(itemId, delta) {
+    cart[itemId] = (cart[itemId] || 0) + delta;
+    if (cart[itemId] <= 0) delete cart[itemId];
+    updateCardControl(itemId);
+    updateCartUI();
+    pulseCartBtn();
+  }
+
+  function updateCardControl(itemId) {
+    const ctrl = document.getElementById('ctrl-' + itemId);
+    if (!ctrl) return;
+    const qty = cart[itemId] || 0;
+    ctrl.innerHTML = qty === 0
+      ? `<button class="add-btn" onclick="changeQty(${itemId}, 1)">+</button>`
+      : `<div class="item-qty-control">
+           <button class="qty-btn" onclick="changeQty(${itemId}, -1)">−</button>
+           <span class="qty-num">${qty}</span>
+           <button class="qty-btn" onclick="changeQty(${itemId}, 1)">+</button>
+         </div>`;
+  }
+
+  function pulseCartBtn() {
+    const btn = document.getElementById('cartBtn');
+    btn.classList.remove('pulse');
+    void btn.offsetWidth;
+    btn.classList.add('pulse');
+  }
+
+  function getTotalItems() {
+    return Object.values(cart).reduce((s, q) => s + q, 0);
+  }
+
+  function getTotalPrice() {
+    let total = 0;
+    for (const [id, qty] of Object.entries(cart)) {
+      const item = findItem(Number(id));
+      if (item) total += item.price * qty;
+    }
+    return total;
+  }
+
+  function findItem(id) {
+    for (const cat of menuData) {
+      const found = cat.items.find(i => i.id === id);
+      if (found) return found;
+    }
+    return null;
+  }
+
+  function updateCartUI() {
+    const count = getTotalItems();
+    document.getElementById('cartCount').textContent = count;
+
+    const itemsEl = document.getElementById('cartItems');
+    if (count === 0) {
+      itemsEl.innerHTML = `<div class="cart-empty"><div class="cart-empty-icon">🛒</div><div>Your cart is empty.<br>Add something delicious!</div></div>`;
+    } else {
+      itemsEl.innerHTML = Object.entries(cart).map(([id, qty]) => {
+        const item = findItem(Number(id));
+        if (!item) return '';
+        return `
+          <div class="cart-item">
+            <div class="cart-item-emoji">${item.emoji}</div>
+            <div class="cart-item-info">
+              <div class="cart-item-name">${item.name}</div>
+              <div class="cart-item-price">RM ${(item.price * qty).toFixed(2)}</div>
+            </div>
+            <div class="cart-item-controls">
+              <button class="cart-qty-btn" onclick="changeQty(${item.id}, -1)">−</button>
+              <span class="cart-qty-num">${qty}</span>
+              <button class="cart-qty-btn" onclick="changeQty(${item.id}, 1)">+</button>
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    document.getElementById('cartTotal').textContent = `RM ${getTotalPrice().toFixed(2)}`;
+    document.getElementById('placeOrderBtn').disabled = count === 0;
+  }
+
+  // ── ORDER TYPE ──
+  function setOrderType(type) {
+    orderType = type;
+    document.getElementById('btn-dinein').classList.toggle('active', type === 'dinein');
+    document.getElementById('btn-takeaway').classList.toggle('active', type === 'takeaway');
+
+    const bar = document.getElementById('orderInfoBar');
+    const label = document.getElementById('orderInfoLabel');
+    const input = document.getElementById('orderInfoInput');
+
+    bar.classList.add('visible');
+    if (type === 'dinein') {
+      label.textContent = 'Table Number';
+      input.placeholder = 'Enter your table number';
+      input.type = 'number';
+    } else {
+      label.textContent = 'Your Name';
+      input.placeholder = 'Enter your name for pickup';
+      input.type = 'text';
+    }
+
+    updateCartBadge();
+  }
+
+  function updateCartBadge() {
+    const val = document.getElementById('orderInfoInput').value || '—';
+    const icon = orderType === 'dinein' ? '🪑' : '🥡';
+    const label = orderType === 'dinein' ? `Dine-In — Table ${val}` : `Takeaway — ${val}`;
+    document.getElementById('cartBadge').textContent = `${icon} ${label}`;
+  }
+
+  document.getElementById('orderInfoInput').addEventListener('input', updateCartBadge);
+
+  // ── CART OPEN/CLOSE ──
+  function openCart() {
+    document.getElementById('cartOverlay').classList.add('open');
+    document.getElementById('cartDrawer').classList.add('open');
+    document.body.style.overflow = 'hidden';
+    updateCartBadge();
+  }
+
+  function closeCart() {
+    document.getElementById('cartOverlay').classList.remove('open');
+    document.getElementById('cartDrawer').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  // ── PLACE ORDER ──
+  function placeOrder() {
+    const infoVal = document.getElementById('orderInfoInput').value.trim();
+    if (!infoVal) {
+      const input = document.getElementById('orderInfoInput');
+      input.focus();
+      input.style.borderColor = 'var(--danger)';
+      setTimeout(() => input.style.borderColor = '', 2000);
+      closeCart();
+      return;
+    }
+
+    const orderId = '#' + (++orderCounter);
+
+    // Show success modal
+    document.getElementById('modalOrderId').textContent = orderId;
+    document.getElementById('successModal').classList.add('open');
+
+    // Show status tracker
+    document.getElementById('statusSub').textContent = `Tracking order ${orderId}`;
+    document.getElementById('statusSection').classList.add('visible');
+
+    // Reset cart
+    cart = {};
+    menuData.forEach(cat => cat.items.forEach(item => updateCardControl(item.id)));
+    updateCartUI();
+    closeCart();
+
+    // Simulate status progression
+    simulateStatus();
+  }
+
+  function simulateStatus() {
+    const step2 = document.getElementById('step2');
+    const step3 = document.getElementById('step3');
+    const line1 = document.getElementById('line1');
+    const line2 = document.getElementById('line2');
+
+    // Reset
+    step2.className = 'status-step active';
+    step3.className = 'status-step';
+    line1.className = 'status-line done';
+    line2.className = 'status-line';
+
+    setTimeout(() => {
+      step2.className = 'status-step done';
+      step2.querySelector('.status-dot').textContent = '✓';
+      line2.className = 'status-line done';
+      step3.className = 'status-step active';
+    }, 8000);
+
+    setTimeout(() => {
+      step3.className = 'status-step done';
+      step3.querySelector('.status-dot').textContent = '✓';
+      document.querySelector('#statusSection .status-header').textContent = '🎉 Your Order is Ready!';
+    }, 16000);
+  }
+
+  function closeModal() {
+    document.getElementById('successModal').classList.remove('open');
+  }
+
+  // ── INIT ──
+  renderMenu();
+  updateCartUI();
+  updateCartBadge();
+</script>
+</body>
+</html>

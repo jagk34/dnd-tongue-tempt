@@ -611,10 +611,33 @@
     }
   ];
 
+  // ── SUPABASE CONFIG ──
+  const SUPABASE_URL = 'https://nvwvowbujxpasgxalnje.supabase.co';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52d3Zvd2J1anhwYXNneGFsbmplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUzNTYwOTEsImV4cCI6MjEwMDkzMjA5MX0.aIuPTx0EISxpOCZAKP5CaLqzjq27rEnFkfG1AXxq-ak';
+
+  const sb = {
+    async query(table, method, body, extra) {
+      method = method || 'GET'; extra = extra || '';
+      const res = await fetch(SUPABASE_URL + '/rest/v1/' + table + extra, {
+        method: method,
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Authorization': 'Bearer ' + SUPABASE_KEY,
+          'Content-Type': 'application/json',
+          'Prefer': method === 'POST' ? 'return=representation' : ''
+        },
+        body: body ? JSON.stringify(body) : null
+      });
+      if (!res.ok) throw new Error(await res.text());
+      return method === 'DELETE' ? null : res.json();
+    }
+  };
+
   // ── STATE ──
-  let cart = {};           // { itemId: quantity }
+  let cart = {};
   let orderType = 'dinein';
-  let orderCounter = Math.floor(1000 + Math.random() * 9000);
+  let currentOrderId = null;
+  let statusPollInterval = null;
 
   // ── RENDER MENU ──
   function renderMenu() {
@@ -811,7 +834,7 @@
   }
 
   // ── PLACE ORDER ──
-  function placeOrder() {
+  async function placeOrder() {
     const infoVal = document.getElementById('orderInfoInput').value.trim();
     if (!infoVal) {
       const input = document.getElementById('orderInfoInput');
@@ -822,50 +845,102 @@
       return;
     }
 
-    const orderId = '#' + (++orderCounter);
+    const btn = document.getElementById('placeOrderBtn');
+    btn.disabled = true;
+    btn.textContent = 'Sending order...';
 
-    // Show success modal
-    document.getElementById('modalOrderId').textContent = orderId;
-    document.getElementById('successModal').classList.add('open');
+    try {
+      const total = getTotalPrice();
+      const cartItems = Object.entries(cart).map(([id, qty]) => {
+        const item = findItem(Number(id));
+        return { item_name: item.name, quantity: qty, price: item.price };
+      });
 
-    // Show status tracker
-    document.getElementById('statusSub').textContent = `Tracking order ${orderId}`;
-    document.getElementById('statusSection').classList.add('visible');
+      // Insert order
+      const orderRes = await sb.query('orders', 'POST', {
+        customer_name: infoVal,
+        order_type: orderType,
+        notes: document.getElementById('cartNotes').value.trim(),
+        status: 'received',
+        total: total
+      });
 
-    // Reset cart
-    cart = {};
-    menuData.forEach(cat => cat.items.forEach(item => updateCardControl(item.id)));
-    updateCartUI();
-    closeCart();
+      const order = Array.isArray(orderRes) ? orderRes[0] : orderRes;
+      currentOrderId = order.id;
+      const orderNum = '#' + order.order_number;
 
-    // Simulate status progression
-    simulateStatus();
+      // Insert order items
+      const itemsPayload = cartItems.map(i => ({ ...i, order_id: currentOrderId }));
+      await sb.query('order_items', 'POST', itemsPayload);
+
+      // Show success modal
+      document.getElementById('modalOrderId').textContent = orderNum;
+      document.getElementById('successModal').classList.add('open');
+
+      // Show status tracker
+      document.getElementById('statusSub').textContent = 'Tracking order ' + orderNum;
+      document.getElementById('statusSection').classList.add('visible');
+
+      // Reset cart
+      cart = {};
+      menuData.forEach(cat => cat.items.forEach(item => updateCardControl(item.id)));
+      updateCartUI();
+      closeCart();
+      document.getElementById('cartNotes').value = '';
+
+      // Start polling for real status updates
+      startStatusPolling(currentOrderId);
+
+    } catch (err) {
+      console.error('Order failed:', err);
+      alert('Failed to place order. Please try again.');
+      btn.disabled = false;
+      btn.textContent = 'Place Order 🚀';
+    }
   }
 
-  function simulateStatus() {
+  function startStatusPolling(orderId) {
+    // Clear any existing poll
+    if (statusPollInterval) clearInterval(statusPollInterval);
+
+    const step1 = document.getElementById('step1');
     const step2 = document.getElementById('step2');
     const step3 = document.getElementById('step3');
     const line1 = document.getElementById('line1');
     const line2 = document.getElementById('line2');
 
-    // Reset
+    // Reset to received
+    step1.className = 'status-step done';
     step2.className = 'status-step active';
     step3.className = 'status-step';
     line1.className = 'status-line done';
     line2.className = 'status-line';
+    step2.querySelector('.status-dot').textContent = '👨‍🍳';
+    step3.querySelector('.status-dot').textContent = '✅';
 
-    setTimeout(() => {
-      step2.className = 'status-step done';
-      step2.querySelector('.status-dot').textContent = '✓';
-      line2.className = 'status-line done';
-      step3.className = 'status-step active';
-    }, 8000);
+    statusPollInterval = setInterval(async () => {
+      try {
+        const rows = await sb.query('orders', 'GET', null, '?id=eq.' + orderId + '&select=status');
+        if (!rows || !rows.length) return;
+        const status = rows[0].status;
 
-    setTimeout(() => {
-      step3.className = 'status-step done';
-      step3.querySelector('.status-dot').textContent = '✓';
-      document.querySelector('#statusSection .status-header').textContent = '🎉 Your Order is Ready!';
-    }, 16000);
+        if (status === 'preparing') {
+          step2.className = 'status-step active';
+          line2.className = 'status-line';
+          document.querySelector('#statusSection .status-header').textContent = '👨‍🍳 Preparing your order...';
+        } else if (status === 'ready') {
+          step2.className = 'status-step done';
+          step2.querySelector('.status-dot').textContent = '✓';
+          line2.className = 'status-line done';
+          step3.className = 'status-step done';
+          step3.querySelector('.status-dot').textContent = '✓';
+          document.querySelector('#statusSection .status-header').textContent = '🎉 Your Order is Ready!';
+          clearInterval(statusPollInterval);
+        } else if (status === 'done') {
+          clearInterval(statusPollInterval);
+        }
+      } catch(e) { console.error('Poll error', e); }
+    }, 5000); // poll every 5 seconds
   }
 
   function closeModal() {
